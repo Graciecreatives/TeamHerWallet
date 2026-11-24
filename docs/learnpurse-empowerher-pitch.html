@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LearnPurse | EmpowerHer x402 Pitch</title>
+  <style>
+    @page { size: 13.333in 7.5in; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; color: #2f1730; background: #fff9fc; font-family: Arial, Helvetica, sans-serif; }
+    body { counter-reset: page; }
+    .slide { position: relative; width: 13.333in; height: 7.5in; padding: .55in .7in .52in; overflow: hidden; page-break-after: always; break-after: page; background: #fff9fc; }
+    .slide:last-child { page-break-after: auto; break-after: auto; }
+    .slide.dark { background: #30192e; color: #fff9fc; }
+    .slide.green { background: #eaf5ee; }
+    .slide::before { content: ''; position: absolute; left: 0; top: 0; height: .09in; width: 100%; background: linear-gradient(90deg,#a31c60 0 43%,#f0b452 43% 70%,#148163 70%); }
+    h1,h2,h3,p,ul,ol { margin: 0; }
+    h1 { font-size: 48px; line-height: 1.05; max-width: 8.5in; }
+    h2 { font-size: 34px; line-height: 1.1; margin: .13in 0 .28in; }
+    h3 { font-size: 19px; line-height: 1.17; margin-bottom: .11in; }
+    p,li { font-size: 17px; line-height: 1.34; }
+    strong { font-weight: 750; }
+    .kicker { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: #a31c60; }
+    .dark .kicker { color: #f4bfcf; }
+    .lead { font-size: 21px; line-height: 1.32; max-width: 10.8in; color: #654d60; }
+    .dark .lead { color: #eedde7; }
+    .muted { color: #654d60; }
+    .dark .muted { color: #e3cbd9; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: .26in; }
+    .three { display: grid; grid-template-columns: repeat(3,1fr); gap: .2in; }
+    .panel { padding: .23in; border: 1px solid #e6d8df; border-radius: 7px; background: #fff; }
+    .dark .panel { background: #43273e; border-color: #6e4b65; }
+    .panel.tint { background: #fce8f1; border-color: #efc8d8; }
+    .panel.mint { background: #e8f4ed; border-color: #b3d9c5; }
+    .panel.gold { background: #fff2d9; border-color: #eacc8b; }
+    .panel.lilac { background: #eee8fc; border-color: #d4c8ec; }
+    ul { padding-left: .22in; }
+    li { margin-bottom: .1in; }
+    .tag { display: inline-block; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .6px; color: #811448; background: #fce8f1; padding: .065in .1in; border-radius: 3px; margin-bottom: .11in; }
+    .num { font-size: 33px; line-height: 1; font-weight: 800; color: #a31c60; margin-bottom: .1in; }
+    .footer { position: absolute; bottom: .19in; left: .7in; right: .7in; display: flex; justify-content: space-between; gap: .3in; font-size: 11px; color: #725d6a; border-top: 1px solid #dacbd3; padding-top: .07in; }
+    .dark .footer { color: #dbc4d2; border-color: #75566b; }
+    .footer span:first-child { max-width: 10.7in; }
+    .callout { border-left: 5px solid #a31c60; padding: .13in .2in; background: #fce8f1; font-size: 18px; line-height: 1.3; }
+    .dark .callout { background: #492b43; border-color: #f1ae59; }
+    .row { display: flex; gap: .13in; align-items: center; }
+    .arrow { color: #a31c60; font-size: 25px; font-weight: bold; }
+    .flow { display: grid; grid-template-columns: repeat(4,1fr); gap: .15in; }
+    .flow .panel { min-height: 1.64in; }
+    .flow p { font-size: 15px; }
+    .small p, .small li { font-size: 15px; line-height: 1.27; }
+    .small li { margin-bottom: .08in; }
+    .compact p, .compact li { font-size: 15.5px; line-height: 1.29; }
+    .compact li { margin-bottom: .07in; }
+    .hero-photo { position: absolute; right: 0; top: .09in; width: 5.05in; height: 6.95in; object-fit: cover; object-position: center; }
+    .hero-shade { position: absolute; right: 4.45in; top: .09in; width: 1.3in; height: 6.95in; background: linear-gradient(90deg,#30192e,transparent); }
+    .hero-copy { position: relative; z-index: 1; width: 7.6in; padding-top: .7in; }
+    .hero-copy h1 { margin: .25in 0 .32in; font-size: 56px; }
+    .hero-copy .lead { max-width: 6.45in; }
+    .hero-stats { display: flex; gap: .2in; margin-top: .5in; }
+    .hero-stats > div { border-top: 2px solid #f0b452; padding-top: .12in; width: 2in; font-size: 16px; line-height: 1.3; }
+    .step { display: flex; gap: .16in; padding: .11in 0; border-bottom: 1px solid #e6d8df; }
+    .step:last-child { border: 0; }
+    .step b { color: #a31c60; font-size: 18px; min-width: .38in; }
+    .step p { font-size: 16px; }
+    .timeline { display: grid; grid-template-columns: repeat(5,1fr); gap: .13in; }
+    .timeline .panel { min-height: 2.25in; }
+    .timeline p { font-size: 15px; }
+    .metric { color: #811448; font-weight: 800; font-size: 23px; line-height: 1.1; margin-bottom: .08in; }
+    .dark .metric { color: #f0b452; }
+    code { font-family: Consolas, monospace; font-size: .87em; }
+    a { color: inherit; }
+  </style>
+</head>
+<body>
+  <section class="slide dark">
+    <img class="hero-photo" src="../public/images/creator-workspace-1200.webp" alt="Woman working on a laptop">
+    <div class="hero-shade"></div>
+    <div class="hero-copy">
+      <p class="kicker">EmpowerHer: Building the Agent Economy | Stellar x402</p>
+      <h1>LearnPurse</h1>
+      <p class="lead">AI agents that pay for women's learning, inside rules a family can see on-chain.</p>
+      <p style="font-size:20px;margin-top:.3in;max-width:6.4in">Women turn expertise into paid classes and guides. Learners' agents discover and buy them using x402 on Stellar, with spending bounded by a Soroban contract.</p>
+      <div class="hero-stats"><div>Creator-owned<br><strong>payout wallet</strong></div><div>Agent-controlled<br><strong>discovery</strong></div><div>Contract-enforced<br><strong>budget</strong></div></div>
+    </div>
+    <div class="footer"><span>Hackathon prototype | Testnet USDC only; no real-money earnings claim. Cover photo: Andrew Neel / Unsplash.</span><span>01 / 10</span></div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The problem | Two sides of the same market</p>
+    <h2>Knowledge has value. Selling and funding it are still hard.</h2>
+    <p class="lead" style="margin-bottom:.32in">A woman who can teach a language, craft, or practical skill should not need a full digital commerce operation to earn from it. A family should not need to manually approve every small learning purchase.</p>
+    <div class="columns">
+      <div class="panel tint"><span class="tag">Creator friction</span><h3>Expertise does not automatically become income</h3><ul><li>Packaging a course means writing lessons, pricing, a sales page, and a checkout.</li><li>Payment follow-up and access delivery add work after the sale.</li><li>Conventional platform and payout models may reduce control or exclude some creators.</li></ul></div>
+      <div class="panel lilac"><span class="tag">Learner friction</span><h3>Delegating spending needs hard boundaries</h3><ul><li>Families and sponsors want relevant learning, not endless searching.</li><li>A general-purpose AI with an unrestricted payment credential can overbuy or buy the wrong thing.</li><li>Approval of every low-cost class defeats the benefit of an autonomous agent.</li></ul></div>
+    </div>
+    <div class="callout" style="margin-top:.26in">Opportunity: connect creator supply to learner demand with agent-native payments and owner-defined, independently enforced limits.</div>
+    <div class="footer"><span>Sources: README.md, “The problem”; shared/landing.ts. These are product hypotheses, not measured market statistics.</span><span>02 / 10</span></div>
+  </section>
+
+  <section class="slide green">
+    <p class="kicker">The solution | A complete learning marketplace</p>
+    <h2>Two AI assistants, one direct payment rail.</h2>
+    <div class="three" style="margin-top:.34in">
+      <div class="panel"><div class="num">01</div><h3>Create</h3><p>A woman describes what she teaches. The creator assistant drafts lessons, price and presentation; she edits and approves publication. Listings can be a class, a private PDF guide, or a bundle.</p></div>
+      <div class="panel"><div class="num">02</div><h3>Discover</h3><p>A learner or sponsor states a goal and funds a learning purse. The learning agent evaluates published classes, explains recommendations and asks for approval only above the owner's threshold.</p></div>
+      <div class="panel"><div class="num">03</div><h3>Pay & learn</h3><p>The contract releases a single class price to the agent wallet. The agent completes an x402 payment in Testnet USDC to the creator's wallet and the paid classroom or document unlocks.</p></div>
+    </div>
+    <div class="callout" style="margin-top:.34in">No matching class? The agent posts a privacy-limited request, suggests free resources and can purchase a matching creator response under the same rules.</div>
+    <div class="footer"><span>Sources: README.md, “The solution” and “Private paid PDF guides”; server/utils/learning-agent.ts.</span><span>03 / 10</span></div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Creator journey | Supply-side empowerment</p>
+    <h2>From “I teach this” to a paid, owned storefront.</h2>
+    <div class="columns compact" style="grid-template-columns:1.05fr .95fr">
+      <div><div class="step"><b>1.</b><p><strong>Describe the expertise:</strong> class topic, audience, format, price and schedule in natural language.</p></div><div class="step"><b>2.</b><p><strong>Co-create the offer:</strong> AI drafts and revises lessons, payment options, title and design; creator stays in control of publication.</p></div><div class="step"><b>3.</b><p><strong>Publish and share:</strong> the creator's authenticated account supplies the payout address; the buyer sees a class page with a protected access URL.</p></div><div class="step"><b>4.</b><p><strong>Deliver and earn:</strong> successful x402 settlement records enrolment and opens lessons or a private PDF. Payment goes to the creator's Stellar wallet, not a LearnPurse custody account.</p></div></div>
+      <div class="panel tint"><h3>What creators can sell today</h3><ul><li>Paid classes with lessons and classroom access.</li><li>Private PDF guides and class + PDF bundles.</li><li>Single payment, repeat payment or installments for supported classes.</li><li>Courses created in response to anonymous learner demand.</li></ul><p class="muted" style="font-size:14px;margin-top:.16in">Example: “I teach Yoruba to kids abroad” is an illustrative creator prompt, not evidence of sales.</p></div>
+    </div>
+    <div class="footer"><span>Sources: README.md, “What is implemented” and “Private paid PDF guides”; server/api/courses/index.post.ts.</span><span>04 / 10</span></div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Learner journey | Agentic demand</p>
+    <h2>The agent buys the right class, not unlimited authority.</h2>
+    <p class="lead" style="margin-bottom:.26in">Illustrative demo: Ada wants to speak Yoruba with her grandma. Her sponsor funds a 6 USDC purse, caps each class at 5 USDC and requires approval above 3 USDC.</p>
+    <div class="flow small"><div class="panel"><div class="num">01</div><h3>Set the goal</h3><p>Learner, subject and budget rules are stored; a dedicated agent wallet and Soroban purse are created on Testnet.</p></div><div class="panel"><div class="num">02</div><h3>Recommend</h3><p>The agent ranks matching public classes and records why they fit; when none fit, it requests one and offers free resources.</p></div><div class="panel"><div class="num">03</div><h3>Act within rules</h3><p>It can buy a 2 USDC class after contract checks. A 4 USDC class pauses for the owner's approval and co-signature.</p></div><div class="panel"><div class="num">04</div><h3>Show the outcome</h3><p>Paid classes appear in the library; events and transaction receipts link to the Stellar Testnet explorer.</p></div></div>
+    <div class="callout" style="margin-top:.3in">Agent autonomy is useful because the owner does not have to approve every small purchase. It is credible because the spending limits are enforced outside the model.</div>
+    <div class="footer"><span>Sources: README.md, “Demo flow” and “How the money is protected”; example amounts are demo settings.</span><span>05 / 10</span></div>
+  </section>
+
+  <section class="slide dark">
+    <p class="kicker">x402 | The core payment protocol</p>
+    <h2>HTTP 402 turns a protected lesson into an agent-payable resource.</h2>
+    <div class="timeline" style="margin-top:.31in">
+      <div class="panel"><div class="metric">01 / Request</div><p>Agent calls <code>GET /api/courses/:id/access</code> for a chosen paid class.</p></div>
+      <div class="panel"><div class="metric">02 / Quote</div><p>Server returns <code>402</code> with <code>PAYMENT-REQUIRED</code>: exact USDC amount, <code>stellar:testnet</code>, and <code>payTo</code> = creator wallet.</p></div>
+      <div class="panel"><div class="metric">03 / Validate</div><p>Agent checks offer against listed price, recipient and network, with a library-level spend cap; it signs the exact payment.</p></div>
+      <div class="panel"><div class="metric">04 / Settle</div><p>Agent retries with <code>PAYMENT-SIGNATURE</code>. Resource server asks the x402 facilitator to verify and settle the USDC transfer on Stellar.</p></div>
+      <div class="panel"><div class="metric">05 / Unlock</div><p>Server responds with paid access and <code>PAYMENT-RESPONSE</code> containing settlement evidence; enrolment is recorded.</p></div>
+    </div>
+    <div class="callout" style="margin-top:.31in">Why x402 matters: one payment interface serves autonomous agents and human buyers using Freighter, while the creator receives the listed price directly on Stellar Testnet. The purse release is a separate, prior on-chain transaction.</div>
+    <div class="footer"><span>Sources: README.md, “x402 payment flow”; server/utils/x402.ts; app/utils/x402-pay.ts; server/utils/learning-agent.ts.</span><span>06 / 10</span></div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Trust model | Rules before reasoning</p>
+    <h2>Three independent controls bound what an agent can spend.</h2>
+    <div class="three compact" style="margin-top:.34in"><div class="panel mint"><span class="tag">On-chain</span><h3>1. Soroban learning purse</h3><p>Holds the budget and checks per-class cap, remaining total, one payment per class, pause state and owner co-signature above the ask-first threshold. Owner can change limits and withdraw.</p></div><div class="panel lilac"><span class="tag">At checkout</span><h3>2. x402 offer validation</h3><p>The client verifies recipient, exact listed price and Testnet network before signing; the x402 client also applies a spend cap tied to the per-class limit.</p></div><div class="panel gold"><span class="tag">At rest</span><h3>3. Minimal agent balance</h3><p>The agent wallet does not hold the whole budget between purchases. The purse releases only a single approved class price when a payment is ready.</p></div></div>
+    <div class="callout" style="margin-top:.36in">The model selects; the contract authorizes. The demo still keeps encrypted agent and purse-owner keys server-side. Production should move owner approvals and withdrawals into the owner's own wallet.</div>
+    <div class="footer"><span>Sources: contracts/learning-purse/src/lib.rs and test.rs; shared/agent-policy.ts; README.md, “Honest limits”.</span><span>07 / 10</span></div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">System architecture | Where each responsibility lives</p>
+    <h2>AI decides. Contracts constrain. x402 settles. Creators receive.</h2>
+    <div class="columns compact" style="grid-template-columns:1fr 1fr;margin-top:.17in"><div class="panel"><h3>Experience and application</h3><ul><li><strong>Nuxt studio:</strong> authenticated creators draft and publish classes, documents and bundles.</li><li><strong>Learning console:</strong> owner sets goal, budget, threshold; agent recommends and initiates purchases.</li><li><strong>Nuxt resource server:</strong> protects <code>/access</code>, verifies x402 settlement and issues entitlement.</li><li><strong>Cloudflare Workers + D1/R2:</strong> accounts, listings, events, enrolments, covers and private PDF bytes.</li></ul></div><div class="panel"><h3>Money and proof on Stellar Testnet</h3><ul><li><strong>Soroban purse:</strong> budget and release rules independent of the model.</li><li><strong>USDC:</strong> purse transfers one class price to agent wallet; x402 payment then sends it to creator.</li><li><strong>x402 facilitator:</strong> verifies and settles the signed payment with sponsored transaction fees.</li><li><strong>Explorer receipts:</strong> release and payment transaction references are available in agent history.</li></ul></div></div>
+    <div class="callout" style="margin-top:.27in">A direct buyer skips the learning agent and purse: Freighter signs the same x402 offer; paid access follows the same protected-resource path.</div>
+    <div class="footer"><span>Sources: README.md, “Architecture”; server/utils/purse.ts; server/utils/x402.ts; docs/private-documents.md.</span><span>08 / 10</span></div>
+  </section>
+
+  <section class="slide green">
+    <p class="kicker">Evidence | What the prototype actually demonstrates</p>
+    <h2>Working Testnet flows, not projected traction.</h2>
+    <div class="columns compact" style="grid-template-columns:1.03fr .97fr"><div class="panel"><h3>Implemented and exercised</h3><ul><li>Real Testnet purse tests: valid release, duplicate class, limit, budget and owner-approval cases.</li><li>Agent e2e: buy a fitting class; hold an above-threshold purchase for approval; avoid buying twice.</li><li>Request loop: no match, publish a requested class, then agent buys it within rules.</li><li>Student x402 flow: payment settles to creator wallet and enrolment is issued.</li><li>Authenticated creator publishing and private PDF purchase/download have dedicated checks.</li></ul></div><div class="panel gold"><h3>What this does not prove yet</h3><ul><li>All value is Testnet USDC, not real revenue or customer adoption.</li><li>The public facilitator is a single external settlement dependency.</li><li>Demo owner keys are server-managed; the agent console uses a private owner link.</li><li>A final seat can fill after settlement, so recovery needs production-grade handling.</li><li>The payment-brain server currently runs on Node, not at the Cloudflare edge.</li></ul></div></div>
+    <p class="muted" style="font-size:13px;margin-top:.2in">Example documented settlement: <code>82c76491484692ed2bfc1a35a58cc0251526c2dbf9074597bc9f34c2928eda1a</code> (Stellar Testnet; see docs/tasks.md). Re-run scripts against a configured environment for fresh proof.</p>
+    <div class="footer"><span>Sources: README.md, “Verified on Stellar Testnet” and “Honest limits”; docs/tasks.md; docs/limitations.md.</span><span>09 / 10</span></div>
+  </section>
+
+  <section class="slide dark">
+    <p class="kicker">Why EmpowerHer | The next milestone</p>
+    <h2>Turn women's expertise into an agent-accessible economy.</h2>
+    <p class="lead" style="margin-bottom:.35in">LearnPurse links two outcomes: women can publish and receive payment directly; families can delegate learning purchases without delegating unlimited financial control. Stellar and x402 make that link programmable and auditable.</p>
+    <div class="three compact"><div class="panel"><h3>Now: prototype</h3><p>Creator assistant, learning agent, Soroban purse, x402 Testnet payments, paid classrooms, private guides and request-to-creator loop.</p></div><div class="panel"><h3>Next: ownership</h3><p>Move purse ownership to the sponsor's wallet; keep only capped agent signing server-side. Add authenticated owner access and better payment/seat reconciliation.</p></div><div class="panel"><h3>Then: validation</h3><p>Pilot with women creators and learner sponsors; measure time to publish, request-to-class conversion, successful purchases and creator payout reliability before mainnet consideration.</p></div></div>
+    <div class="callout" style="margin-top:.35in">Hackathon ask: help validate the creator + learner loop and strengthen the Stellar x402 path from a convincing Testnet demo into a responsible real-world product.</div>
+    <div class="footer"><span>LearnPurse | TeamHerWallet | Testnet prototype. Roadmap is proposed work, not implemented functionality.</span><span>10 / 10</span></div>
+  </section>
+</body>
+</html>

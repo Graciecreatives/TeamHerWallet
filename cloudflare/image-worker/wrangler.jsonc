@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "learnpurse-images",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "account_id": "eedfbfafc0fb362af6380bb4c1286c7b",
+  "workers_dev": true,
+  "r2_buckets": [
+    { "binding": "IMAGES", "bucket_name": "coursepay-images" },
+    { "binding": "DOCUMENTS", "bucket_name": "learnpurse-private-documents" }
+  ],
+  "observability": { "enabled": true }
+}

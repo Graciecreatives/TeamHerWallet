@@ -1,0 +1,58 @@
+{
+  "name": "learnpurse",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:browser": "playwright test",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test:agent": "node scripts/learning-agent-e2e.mjs",
+    "seed:demo": "node scripts/seed-demo-classes.mjs",
+    "test:ui": "node scripts/test-studio-ui.mjs",
+    "db:check": "node --env-file-if-exists=.env scripts/db-check.mjs",
+    "db:migrate": "node --env-file-if-exists=.env scripts/db-migrate.mjs",
+    "test:db": "node scripts/test-database.mjs",
+    "check:env": "node --env-file-if-exists=.env scripts/check-env.mjs",
+    "contract:check": "cargo metadata --manifest-path contracts/Cargo.toml --no-deps --format-version 1",
+    "contract:test": "cargo test --manifest-path contracts/Cargo.toml",
+    "contract:build": "cargo build --manifest-path contracts/Cargo.toml --target wasm32v1-none --release",
+    "seed:common": "node scripts/seed-common-classes.mjs",
+    "test:requests": "node scripts/class-request-e2e.mjs",
+    "test:purse": "node scripts/purse-testnet-check.mjs",
+    "test:auth": "node scripts/auth-gate-check.mjs",
+    "test:classroom": "node scripts/classroom-e2e.mjs",
+    "test:documents": "node scripts/document-e2e.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/outfit": "5.3.0",
+    "@lucide/vue": "1.77.0",
+    "@stellar/freighter-api": "6.0.1",
+    "@x402/core": "2.32.0",
+    "@x402/stellar": "2.32.0",
+    "nuxt": "4.6.4",
+    "postgres": "4.1.1",
+    "primevue": "4.5.5",
+    "vue": "3.5.46",
+    "vue-router": "4.6.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/node": "24.19.2",
+    "@vitejs/plugin-vue": "6.0.11",
+    "happy-dom": "21.0.4",
+    "tailwindcss": "4.3.5",
+    "typescript": "~5.9.3",
+    "vite": "8.3.8",
+    "vue-tsc": "~3.2.5"
+  }
+}

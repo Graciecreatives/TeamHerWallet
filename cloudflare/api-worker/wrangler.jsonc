@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "learnpurse-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "account_id": "eedfbfafc0fb362af6380bb4c1286c7b",
+  "workers_dev": true,
+  "d1_databases": [
+    { "binding": "DB", "database_name": "coursepay-db", "database_id": "8da9a009-1bcd-4707-9828-c363706b8522", "migrations_dir": "migrations" }
+  ],
+  "triggers": { "crons": ["17 3 * * *"] },
+  "observability": { "enabled": true }
+}
