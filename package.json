@@ -23,7 +23,7 @@
     "check:env": "node --env-file-if-exists=.env scripts/check-env.mjs",
     "contract:check": "cargo metadata --manifest-path contracts/Cargo.toml --no-deps --format-version 1",
     "contract:test": "cargo test --manifest-path contracts/Cargo.toml",
-    "contract:build": "cargo build --manifest-path contracts/Cargo.toml --target wasm32v1-none --release",
+    "contract:build": "cargo build --manifest-path contracts/Cargo.toml --target wasm32v1-none --release && mkdir -p server/assets/contracts && cp contracts/target/wasm32v1-none/release/learnpurse.wasm server/assets/contracts/learnpurse.wasm",
     "seed:common": "node scripts/seed-common-classes.mjs",
     "test:requests": "node scripts/class-request-e2e.mjs",
     "test:purse": "node scripts/purse-testnet-check.mjs",

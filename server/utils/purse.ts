@@ -80,11 +80,20 @@ async function invoke(source: Keypair, operation: xdr.Operation, authSigners: Ke
   throw new Error(`transaction not confirmed ${sent.hash}`)
 }
 
+/** Fresh local build first, else the copy bundled into the server (server/assets/contracts) so serverless hosts work. */
+async function loadWasm(): Promise<Buffer> {
+  const local = await readFile(WASM_PATH).catch(() => null)
+  if (local) return local
+  const bundled = await useStorage('assets:server').getItemRaw('contracts/learnpurse.wasm').catch(() => null) as Uint8Array | ArrayBuffer | null
+  if (bundled) return Buffer.from(bundled instanceof ArrayBuffer ? new Uint8Array(bundled) : bundled)
+  throw new Error('Purse contract is not built. Run npm run contract:build.')
+}
+
 /** Upload the purse wasm once per process and remember its hash. */
 let wasmHash: Buffer | null = null
 async function ensureWasm(payer: Keypair): Promise<Buffer> {
   if (wasmHash) return wasmHash
-  const wasm = await readFile(WASM_PATH).catch(() => { throw new Error('Purse contract is not built. Run npm run contract:build.') })
+  const wasm = await loadWasm()
   const hash = createHash('sha256').update(wasm).digest()
   // Upload is idempotent on-chain. Simulation fails only if it can't be uploaded at all.
   try { await invoke(payer, Operation.uploadContractWasm({ wasm })) } catch (error) { if (!/exist/i.test(String(error))) throw error }
