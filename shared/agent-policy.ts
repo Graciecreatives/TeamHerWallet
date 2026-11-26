@@ -8,6 +8,8 @@ export interface AgentPolicy {
   approvalAbove: number
   /** Most classes to buy in one run. */
   maxPerRun: number
+  /** Standing approval: the owner said "don't ask again". Pays anything within the per-class cap and total budget. */
+  autoApprove?: boolean
 }
 
 export interface PolicyEvent { kind: string; amount?: number | null; courseId?: string | null; data?: Record<string, any> }
@@ -25,6 +27,7 @@ export function cleanPolicy(input: any, base: AgentPolicy = DEFAULT_POLICY): Age
     totalBudget: clampMoney(input?.totalBudget, base.totalBudget),
     approvalAbove: clampMoney(input?.approvalAbove, base.approvalAbove),
     maxPerRun: Math.max(1, Math.min(5, Math.floor(Number(input?.maxPerRun ?? base.maxPerRun)) || 1)),
+    autoApprove: typeof input?.autoApprove === 'boolean' ? input.autoApprove : Boolean(base.autoApprove),
   }
   if (policy.perClassMax > policy.totalBudget) policy.perClassMax = policy.totalBudget
   return policy
@@ -38,7 +41,7 @@ export function policyBlock(policy: AgentPolicy, price: number, spent: number): 
   return null
 }
 
-export const needsApproval = (policy: AgentPolicy, price: number) => price > policy.approvalAbove
+export const needsApproval = (policy: AgentPolicy, price: number) => !policy.autoApprove && price > policy.approvalAbove
 
 export function spentFrom(events: PolicyEvent[]): number {
   return events.filter(event => event.kind === 'paid').reduce((sum, event) => sum + Number(event.amount ?? 0), 0)

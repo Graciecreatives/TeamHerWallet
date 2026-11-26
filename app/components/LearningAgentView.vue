@@ -10,11 +10,11 @@ const props = defineProps<{ id: string }>()
 const emit = defineEmits<{ home: [] }>()
 const KEY_STORE = 'learnpurse.learning-agents'
 
-type Policy = { perClassMax: number; totalBudget: number; approvalAbove: number; maxPerRun: number }
+type Policy = { perClassMax: number; totalBudget: number; approvalAbove: number; maxPerRun: number; autoApprove?: boolean }
 type AgentEvent = { id?: number; kind: string; message: string; data?: Record<string, any>; amount?: number | null; courseId?: string | null; createdAt?: string }
 type State = { agent: { id: string; name: string; learner: string; goal: string; publicKey: string; purseId?: string | null; policy: Policy }; balance: { usdc: string; xlm: string; ready: boolean; purse?: number; wallet?: number }; purse?: { spent: number; balance: number; paused: boolean; limits: Policy } | null; spent: number; pending: AgentEvent[]; library: { courseId: string; title: string; amount: number; transaction: string; url: string }[]; events: AgentEvent[] }
 
-const form = ref({ name: '', learner: '', goal: '', policy: { perClassMax: 5, totalBudget: 10, approvalAbove: 3, maxPerRun: 2 } as Policy })
+const form = ref({ name: '', learner: '', goal: '', policy: { perClassMax: 5, totalBudget: 10, approvalAbove: 3, maxPerRun: 2, autoApprove: false } as Policy })
 const ownerKey = ref('')
 const state = ref<State | null>(null)
 const busy = ref<'' | 'creating' | 'running' | 'deciding' | 'saving'>('')
@@ -70,9 +70,9 @@ async function run() {
   } catch (cause: any) { error.value = cause.message }
   await refresh(); busy.value = ''
 }
-async function decide(courseId: string, approve: boolean) {
+async function decide(courseId: string, approve: boolean, always = false) {
   error.value = ''; busy.value = 'deciding'
-  try { await api(`/api/learning-agents/${props.id}/decide`, { method: 'POST', body: { courseId, approve } }) } catch (cause: any) { error.value = cause.message }
+  try { await api(`/api/learning-agents/${props.id}/decide`, { method: 'POST', body: { courseId, approve, always } }) } catch (cause: any) { error.value = cause.message }
   await refresh(); busy.value = ''
 }
 async function saveRules() {
@@ -127,6 +127,7 @@ onMounted(async () => {
           <label>Total budget<input v-model.number="form.policy.totalBudget" type="number" min="0" step="1"></label>
           <label>Ask me first above<input v-model.number="form.policy.approvalAbove" type="number" min="0" step="0.5"></label>
           <label>Classes per run<input v-model.number="form.policy.maxPerRun" type="number" min="1" max="5"></label>
+          <label class="la-check"><input v-model="form.policy.autoApprove" type="checkbox"> Don’t ask me. Pay automatically within this budget</label>
         </fieldset>
         <div class="la-wallet">
           <strong>Approve here. The agent handles payment.</strong>
@@ -158,7 +159,7 @@ onMounted(async () => {
         <section v-for="item in state.pending" :key="item.courseId!" class="la-approval glass" aria-live="polite">
           <StudioIcon name="help" :size="20" />
           <div><strong>Buy “{{ item.data?.title }}” for {{ item.amount }} USDC?</strong><p>{{ item.data?.reason }}</p></div>
-          <div class="la-approval-actions"><button type="button" class="btn btn-glass btn-sm" :disabled="!!busy" @click="decide(item.courseId!, false)">Decline</button><button type="button" class="btn btn-dark btn-sm" :disabled="!!busy" @click="decide(item.courseId!, true)">Approve and pay</button></div>
+          <div class="la-approval-actions"><button type="button" class="btn btn-glass btn-sm" :disabled="!!busy" @click="decide(item.courseId!, false)">Decline</button><button type="button" class="btn btn-glass btn-sm" :disabled="!!busy" @click="decide(item.courseId!, true)">Approve this one</button><button type="button" class="btn btn-dark btn-sm" :disabled="!!busy" :title="`Pay this and future classes without asking, up to ${state.agent.policy.perClassMax} USDC each and ${state.agent.policy.totalBudget} USDC in total`" @click="decide(item.courseId!, true, true)">Approve &amp; don’t ask again</button></div>
         </section>
 
         <h2 class="class-subhead">Agent & x402 log</h2>
@@ -197,7 +198,7 @@ onMounted(async () => {
         <dl v-if="!editingRules" class="enrol-receipt">
           <div><dt>Per class</dt><dd>≤ {{ state.agent.policy.perClassMax }} USDC</dd></div>
           <div><dt>Total budget</dt><dd>{{ state.agent.policy.totalBudget }} USDC</dd></div>
-          <div><dt>Ask first above</dt><dd>{{ state.agent.policy.approvalAbove }} USDC</dd></div>
+          <div><dt>Ask first above</dt><dd>{{ state.agent.policy.autoApprove ? 'Never (auto-pay within budget)' : `${state.agent.policy.approvalAbove} USDC` }}</dd></div>
           <div><dt>Per run</dt><dd>{{ state.agent.policy.maxPerRun }} class{{ state.agent.policy.maxPerRun === 1 ? '' : 'es' }}</dd></div>
         </dl>
         <form v-else class="la-rules" @submit.prevent="saveRules">
@@ -205,6 +206,7 @@ onMounted(async () => {
           <label>Total budget<input v-model.number="rulesDraft.totalBudget" type="number" min="0" step="1"></label>
           <label>Ask first above<input v-model.number="rulesDraft.approvalAbove" type="number" min="0" step="0.5"></label>
           <label>Per run<input v-model.number="rulesDraft.maxPerRun" type="number" min="1" max="5"></label>
+          <label class="la-check"><input v-model="rulesDraft.autoApprove" type="checkbox"> Don’t ask me. Pay automatically within budget</label>
           <button type="submit" class="btn btn-dark btn-sm" :disabled="!!busy">Save rules</button>
         </form>
         <button v-if="!editingRules" type="button" class="btn btn-glass btn-sm" @click="editingRules = true"><StudioIcon name="pen" :size="14" />Change rules</button>

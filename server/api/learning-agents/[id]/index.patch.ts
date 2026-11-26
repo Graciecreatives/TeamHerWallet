@@ -1,4 +1,5 @@
-import { cleanPolicy, loadAgent, logEvent, publicAgent, syncPurseLimits } from '#server/utils/learning-agent'
+import { cleanPolicy, loadAgent, logEvent, payWaitingApprovals, publicAgent, syncPurseLimits } from '#server/utils/learning-agent'
+import { withAgentLock } from '#server/utils/agent-lock'
 import { purseError } from '#server/utils/purse'
 import { cloud } from '#server/utils/cloud'
 
@@ -17,6 +18,11 @@ export default defineEventHandler(async (event) => {
     }
   }
   const updated = await cloud(`/agents/${agent.id}`, { method: 'PATCH', body: { name: text(body.name, 60), learner: text(body.learner, 200), goal: text(body.goal, 600), policy } })
-  if (policy) await logEvent(agent.id, { kind: 'note', message: `Rules updated: up to ${policy.perClassMax} USDC per class, ${policy.totalBudget} USDC in total, ask first above ${policy.approvalAbove} USDC, at most ${policy.maxPerRun} per run.` })
+  if (policy) await logEvent(agent.id, { kind: 'note', message: `Rules updated: up to ${policy.perClassMax} USDC per class, ${policy.totalBudget} USDC in total, ask first above ${policy.autoApprove ? 'never (standing approval on)' : `${policy.approvalAbove} USDC`}, at most ${policy.maxPerRun} per run.` })
+  // Standing approval just switched on: pay what was already waiting for an OK.
+  if (policy?.autoApprove && !agent.policy.autoApprove) {
+    const fresh = { ...agent, policy }
+    await withAgentLock(agent.id, () => payWaitingApprovals(fresh, getRequestURL(event).origin)).catch(() => {})
+  }
   return { agent: publicAgent(updated) }
 })

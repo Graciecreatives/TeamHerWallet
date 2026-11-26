@@ -17,11 +17,14 @@ test('approval threshold', () => {
   assert.equal(needsApproval(policy, 3), false)
   assert.equal(needsApproval(policy, 3.01), true)
   assert.equal(needsApproval({ ...policy, approvalAbove: 0 }, 0.5), true)
+  assert.equal(needsApproval({ ...policy, autoApprove: true }, 5), false, 'standing approval skips asking')
 })
 
 test('cleanPolicy clamps bad input and keeps per-class within budget', () => {
-  assert.deepEqual(cleanPolicy({ perClassMax: 50, totalBudget: 10, approvalAbove: -1, maxPerRun: 99 }), { perClassMax: 10, totalBudget: 10, approvalAbove: 3, maxPerRun: 5 })
-  assert.deepEqual(cleanPolicy({ perClassMax: 'x', totalBudget: '', maxPerRun: 0 }), { perClassMax: 5, totalBudget: 10, approvalAbove: 3, maxPerRun: 1 })
+  assert.deepEqual(cleanPolicy({ perClassMax: 50, totalBudget: 10, approvalAbove: -1, maxPerRun: 99 }), { perClassMax: 10, totalBudget: 10, approvalAbove: 3, maxPerRun: 5, autoApprove: false })
+  assert.deepEqual(cleanPolicy({ perClassMax: 'x', totalBudget: '', maxPerRun: 0 }), { perClassMax: 5, totalBudget: 10, approvalAbove: 3, maxPerRun: 1, autoApprove: false })
+  assert.equal(cleanPolicy({ autoApprove: true }).autoApprove, true)
+  assert.equal(cleanPolicy({ perClassMax: 2 }, { ...policy, autoApprove: true }).autoApprove, true, 'patches keep standing approval')
   assert.equal(cleanPolicy({ totalBudget: 1e9 }).totalBudget, 1000)
   assert.equal(cleanPolicy({ perClassMax: 2 }, policy).totalBudget, 6, 'patches keep previous values')
 })

@@ -614,3 +614,6 @@ body { letter-spacing: -.015em; }
 .login-form { display: grid; gap: 14px; }
 .la-onchain { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #15803d; font-weight: 600; }
 .la-purse .la-icon, .la-released .la-icon { background: #dcfce7; color: #15803d; }
+.la-rules label.la-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink); cursor: pointer; }
+.la-rules .la-check input { width: 18px; height: 18px; padding: 0; accent-color: var(--accent); flex: none; }
+.la-approval-actions { flex-wrap: wrap; }

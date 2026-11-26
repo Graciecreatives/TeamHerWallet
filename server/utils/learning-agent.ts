@@ -272,7 +272,8 @@ async function buy(agent: StoredAgent, origin: string, course: PublishedCourse, 
       // A class already released earlier (payment failed after release) is paid from the wallet without a new release.
       const alreadyReleased = (await listEvents(agent.id)).some(event => event.kind === 'released' && event.courseId === course.id)
       if (!alreadyReleased) {
-        const ownerKey = ownerApproved && agent.ownerSecretEnc ? Keypair.fromSecret(unseal(agent.ownerSecretEnc)) : undefined
+        // Standing approval: the owner said "don't ask again", so co-sign with the owner key (the purse still enforces the caps on-chain).
+        const ownerKey = (ownerApproved || agent.policy.autoApprove) && agent.ownerSecretEnc ? Keypair.fromSecret(unseal(agent.ownerSecretEnc)) : undefined
         const releaseTx = await releaseFromPurse(agentKey, agent.purseId, course.id, price, ownerKey)
         await logEvent(agent.id, { kind: 'released', message: `The purse contract checked the rules and released ${price} USDC for “${course.draft.title}”${ownerKey ? ' with your signature' : ''}.`, amount: price, courseId: course.id, data: { transaction: releaseTx, title: course.draft.title } })
       }
@@ -294,6 +295,7 @@ export async function runAgent(agent: StoredAgent, origin: string, goalOverride?
   const log = async (event: AgentEvent) => { out.push(await logEvent(agent.id, event)); return event }
   const goal = (goalOverride || agent.goal).trim()
   if (!goal) { await log({ kind: 'note', message: 'Tell me what the learner wants to learn first.' }); return out }
+  if (agent.policy.autoApprove) out.push(...await payWaiting(agent, origin))
 
   const history = await listEvents(agent.id)
   let spent = spentFrom(history)
@@ -345,7 +347,7 @@ export async function runAgent(agent: StoredAgent, origin: string, goalOverride?
 }
 
 /** Owner decision on a class waiting for approval. Rules (except the ask-first threshold) still apply. */
-export async function decide(agent: StoredAgent, origin: string, courseId: string, approve: boolean): Promise<AgentEvent[]> {
+export async function decide(agent: StoredAgent, origin: string, courseId: string, approve: boolean, always = false): Promise<AgentEvent[]> {
   const history = await listEvents(agent.id)
   const request = pendingApprovals(history).find(event => event.courseId === courseId)
   if (!request) throw createError({ statusCode: 404, statusMessage: 'Nothing is waiting for approval for that class.' })
@@ -357,10 +359,42 @@ export async function decide(agent: StoredAgent, origin: string, courseId: strin
   const blocked = policyBlock(agent.policy, price, spentFrom(history))
   if (blocked) return [await logEvent(agent.id, { kind: 'blocked', message: `Even with your OK, a rule stops it: ${blocked}`, courseId, amount: price, data: { title } })]
   const approved = await logEvent(agent.id, { kind: 'approved', message: `You approved “${title}”. Paying now.`, courseId, amount: price })
-  return [approved, await buy(agent, origin, course, request.data?.reason ?? '', true)]
+  const out = [approved, await buy(agent, origin, course, request.data?.reason ?? '', true)]
+  if (always && !agent.policy.autoApprove) out.push(...await enableAutoApprove(agent, origin))
+  return out
+}
+
+/** Owner said "don't ask again": save standing approval, then pay anything else already waiting that fits the budget. */
+async function enableAutoApprove(agent: StoredAgent, origin: string): Promise<AgentEvent[]> {
+  const policy = cleanPolicy({ ...agent.policy, autoApprove: true }, agent.policy)
+  await cloud(`/agents/${agent.id}`, { method: 'PATCH', body: { policy } })
+  agent.policy = policy
+  const out: AgentEvent[] = [await logEvent(agent.id, { kind: 'note', message: `Standing approval is on. I will pay for classes on my own as long as each is at most ${policy.perClassMax} USDC and the total stays within ${policy.totalBudget} USDC. Turn it off anytime in Rules.` })]
+  return [...out, ...await payWaiting(agent, origin)]
+}
+
+/** With standing approval on, pay classes still waiting for an OK (oldest first), within the rules. */
+async function payWaiting(agent: StoredAgent, origin: string): Promise<AgentEvent[]> {
+  const out: AgentEvent[] = []
+  const history = await listEvents(agent.id)
+  const courses = await listCourses()
+  let spent = spentFrom(history)
+  for (const waiting of pendingApprovals(history).reverse()) {
+    const course = courses.find(entry => entry.id === waiting.courseId)
+    if (!course) continue
+    const price = Number(course.draft.priceAmount)
+    if (policyBlock(agent.policy, price, spent)) continue
+    out.push(await logEvent(agent.id, { kind: 'approved', message: `Standing approval: paying for “${course.draft.title}” that was waiting for your OK.`, courseId: course.id, amount: price }))
+    const event = await buy(agent, origin, course, waiting.data?.reason ?? '', true)
+    out.push(event)
+    if (event.kind === 'paid') spent += price
+  }
+  return out
 }
 
 // ---- Class requests: demand for classes that don't exist yet ----
+/** For the rules endpoint: standing approval just switched on, pay what was already waiting. */
+export const payWaitingApprovals = (agent: StoredAgent, origin: string) => payWaiting(agent, origin)
 export interface ClassRequest { id: string; agentId: string; topic: string; learner: string; brief: string; maxPrice: number; status: 'open' | 'fulfilled' | 'closed'; courseId?: string | null; createdAt: string }
 
 export const listRequests = (query: Record<string, string> = {}) => cloud<ClassRequest[]>('/requests', { query })

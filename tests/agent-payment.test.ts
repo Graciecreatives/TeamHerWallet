@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { stripTypeScriptTypes } from 'node:module'
-import { policyBlock, spentFrom, pendingApprovals } from '../shared/agent-policy.ts'
+import { cleanPolicy, policyBlock, spentFrom, pendingApprovals } from '../shared/agent-policy.ts'
 
 const source = await readFile(new URL('../server/utils/learning-agent.ts', import.meta.url), 'utf8')
 const buySource = source.slice(source.indexOf('async function buy('), source.indexOf('/** One autonomous run:'))
@@ -10,7 +10,7 @@ const decideSource = source.slice(source.indexOf('export async function decide('
 function harness(options: { noKey?: boolean; noPurse?: boolean; price?: number; releaseFails?: boolean } = {}) {
   const events: any[] = [{ kind: 'approval_needed', courseId: 'class-1', amount: 4, data: { title: 'Yoruba' } }]
   const calls: string[] = []
-  const agent = { id: 'agent-1', secretEnc: options.noKey ? '' : 'encrypted-agent', ownerSecretEnc: 'encrypted-owner', purseId: options.noPurse ? null : 'purse-1', policy: { perClassMax: 5, totalBudget: 6, approvalAbove: 3, maxPerRun: 2 } }
+  const agent = { id: 'agent-1', secretEnc: options.noKey ? '' : 'encrypted-agent', ownerSecretEnc: 'encrypted-owner', purseId: options.noPurse ? null : 'purse-1', policy: { perClassMax: 5, totalBudget: 6, approvalAbove: 3, maxPerRun: 2 } as any }
   const course = { id: 'class-1', draft: { title: 'Yoruba', priceAmount: String(options.price ?? 4) } }
   const bindings = {
     usingUserWallet: (value: any) => !value.secretEnc,
@@ -21,12 +21,13 @@ function harness(options: { noKey?: boolean; noPurse?: boolean; price?: number; 
     releaseFromPurse: async (_key: string, _purse: string, _course: string, _price: number, owner: string) => { calls.push(`release:${owner}`); if (options.releaseFails) throw new Error('refused'); return 'release-tx' },
     payForCourse: async () => { calls.push('payment'); return { transaction: 'payment-tx', accessToken: 'paid-token' } },
     purseError: () => 'Purse refused',
-    pendingApprovals, policyBlock, spentFrom,
+    pendingApprovals, policyBlock, spentFrom, cleanPolicy,
+    cloud: async (path: string, init: any) => { calls.push(`cloud:${path}:${init?.body?.policy?.autoApprove}`) },
     listCourses: async () => [course],
     createError: (details: any) => Object.assign(new Error(details.statusMessage), details),
   }
   const decide = new Function(...Object.keys(bindings), `${stripTypeScriptTypes(buySource + decideSource)}\nreturn decide`)(...Object.values(bindings))
-  return { events, calls, decide: (approve = true) => decide(agent, 'https://app.test', course.id, approve) }
+  return { events, calls, agent, decide: (approve = true, always = false) => decide(agent, 'https://app.test', course.id, approve, always) }
 }
 
 test('one in-app approval co-signs the purse release and pays without a browser wallet', async () => {
@@ -53,4 +54,13 @@ test('missing signing key, missing purse and purse refusal cannot reach payment'
     assert.equal(result.at(-1).kind, 'blocked')
     assert.ok(!h.calls.includes('payment'))
   }
+})
+
+test('approve and do not ask again turns on standing approval; later releases are co-signed automatically', async () => {
+  const run = harness()
+  await run.decide(true, true)
+  assert.equal(run.agent.policy.autoApprove, true)
+  assert.ok(run.calls.includes('cloud:/agents/agent-1:true'), 'standing approval is saved')
+  assert.deepEqual(run.calls.filter(call => call.startsWith('release') || call === 'payment'), ['release:encrypted-owner', 'payment'])
+  assert.ok(run.events.some(event => /Standing approval is on/.test(event.message ?? '')))
 })

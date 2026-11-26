@@ -31,10 +31,20 @@ export function purseError(error: unknown): string {
   return `Purse contract call failed: ${text.slice(0, 160)}`
 }
 
+/** Testnet RPC sometimes lags a few seconds behind a freshly funded account. Retry before giving up. */
+async function getAccountWithRetry(rpcServer: rpc.Server, publicKey: string) {
+  for (let attempt = 1; ; attempt++) {
+    try { return await rpcServer.getAccount(publicKey) } catch (error) {
+      if (attempt >= 4 || !/not found|fetch failed|timeout|503|502/i.test(String((error as Error)?.message ?? error))) throw error
+      await new Promise(resolve => setTimeout(resolve, 1500 * attempt))
+    }
+  }
+}
+
 /** Simulate, attach auth, sign and submit. Extra signers authorise their own Soroban auth entries. */
 async function invoke(source: Keypair, operation: xdr.Operation, authSigners: Keypair[] = []): Promise<{ hash: string; result: any }> {
   const rpcServer = server()
-  const account = await rpcServer.getAccount(source.publicKey())
+  const account = await getAccountWithRetry(rpcServer, source.publicKey())
   let tx = new TransactionBuilder(account, { fee: '1000000', networkPassphrase: NETWORK }).addOperation(operation).setTimeout(120).build()
   const simulation = await rpcServer.simulateTransaction(tx)
   if (rpc.Api.isSimulationError(simulation)) throw new Error(simulation.error)
@@ -49,7 +59,7 @@ async function invoke(source: Keypair, operation: xdr.Operation, authSigners: Ke
       signed.push(signer ? await authorizeEntry(entry, signer, latest + 60, NETWORK, address!) : entry)
     }
     const op = tx.operations[0] as Operation.InvokeHostFunction
-    tx = new TransactionBuilder(await rpcServer.getAccount(source.publicKey()), { fee: '1000000', networkPassphrase: NETWORK })
+    tx = new TransactionBuilder(await getAccountWithRetry(rpcServer, source.publicKey()), { fee: '1000000', networkPassphrase: NETWORK })
       .addOperation(Operation.invokeHostFunction({ func: op.func, auth: signed }))
       .setTimeout(120).build()
     const resimulated = await rpcServer.simulateTransaction(tx)
