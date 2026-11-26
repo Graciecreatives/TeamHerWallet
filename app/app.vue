@@ -7,20 +7,21 @@ import StudioView from './components/StudioView.vue'
 import ClassView from './components/ClassView.vue'
 import LearningAgentView from './components/LearningAgentView.vue'
 import StudentLibraryView from './components/StudentLibraryView.vue'
+import CreatorWalletView from './components/CreatorWalletView.vue'
 import type { CreatorProfile } from '#shared/profile'
 import { PROFILE_STORAGE_KEY } from '#shared/profile'
 import { accountHome, studentSection } from '#shared/account-navigation'
 import { saveProfile } from './utils/creator'
 import { transformUi } from './utils/motion'
 
-type View = 'landing' | 'signup' | 'login' | 'studio' | 'class' | 'agent' | 'library'
+type View = 'landing' | 'signup' | 'login' | 'studio' | 'wallet' | 'class' | 'agent' | 'library'
 // Class pages are shareable URLs (/class/:id). Learning agents live at /agent and /agent/:id. /login opens sign in. /library is the student account page.
 const currentPath = import.meta.server ? useRequestURL().pathname : window.location.pathname
 const classId = (() => { const match = currentPath.match(/^\/class\/([a-z0-9-]{6,80})\/?$/); return match ? match[1]! : '' })()
 const agentMatch = currentPath.match(/^\/agent(?:\/([a-z0-9-]{8,64}))?\/?$/)
 const agentId = agentMatch?.[1] ?? ''
 const studentPath = /^\/(?:library|student(?:\/(?:chat|classes|payments|settings|analytics|notifications))?)\/?$/.test(currentPath)
-const view = ref<View>(classId ? 'class' : agentMatch ? 'agent' : studentPath ? 'library' : /^\/studio\/?$/.test(currentPath) ? 'studio' : /^\/signup\/?$/.test(currentPath) ? 'signup' : /^\/login\/?$/.test(currentPath) ? 'login' : 'landing')
+const view = ref<View>(classId ? 'class' : agentMatch ? 'agent' : studentPath ? 'library' : /^\/studio\/wallet\/?$/.test(currentPath) ? 'wallet' : /^\/studio\/?$/.test(currentPath) ? 'studio' : /^\/signup\/?$/.test(currentPath) ? 'signup' : /^\/login\/?$/.test(currentPath) ? 'login' : 'landing')
 // The creator studio requires a signed-in account (server session). Students never need one.
 const profile = ref<CreatorProfile | null>(null)
 const sessionChecked = ref(false)
@@ -32,7 +33,7 @@ function show(next: View) {
   const update = () => {
     view.value = next
     if (typeof window !== 'undefined') {
-      const path = next === 'library' ? '/student' : next === 'studio' ? '/studio' : next === 'landing' ? '/' : `/${next}`
+      const path = next === 'library' ? '/student' : next === 'studio' ? '/studio' : next === 'wallet' ? '/studio/wallet' : next === 'landing' ? '/' : `/${next}`
       window.history.replaceState({}, '', path)
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
@@ -67,7 +68,8 @@ async function checkSession() {
   // Opening /login (or reloading it) while already signed in goes straight to the studio or student library.
   if (view.value === 'library' && profile.value?.role === 'student') return
   if (view.value === 'studio' && profile.value?.role === 'creator') return
-  if (['login', 'library', 'studio'].includes(view.value)) show(accountHome(profile.value?.role))
+  if (view.value === 'wallet' && profile.value?.role === 'creator') return
+  if (['login', 'library', 'studio', 'wallet'].includes(view.value)) show(accountHome(profile.value?.role))
 }
 onMounted(checkSession)
 </script>
@@ -82,6 +84,7 @@ onMounted(checkSession)
     <LearningAgentView v-else-if="view === 'agent'" :id="agentId" @home="show('landing')" />
     <div v-else-if="!sessionChecked" class="class-missing" role="status">Opening your account…</div>
     <StudentLibraryView v-else-if="view === 'library' && profile?.role === 'student'" :profile="profile" :initial-section="studentSection(currentPath)" @home="show('landing')" @sign-out="signOut" />
-    <StudioView v-else-if="view === 'studio' && profile?.role === 'creator'" :profile="profile" @home="show('landing')" @sign-out="signOut" @signed-out="profile = null; show('login')" />
+    <StudioView v-else-if="view === 'studio' && profile?.role === 'creator'" :profile="profile" @home="show('landing')" @wallet="show('wallet')" @sign-out="signOut" @signed-out="profile = null; show('login')" />
+    <CreatorWalletView v-else-if="view === 'wallet' && profile?.role === 'creator'" :profile="profile" @studio="show('studio')" @home="show('landing')" @sign-out="profile = null; show('login')" @profile-changed="(next) => { profile = next; saveProfile(next) }" />
   </div>
 </template>

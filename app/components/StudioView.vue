@@ -16,7 +16,7 @@ import { studioSteps, errorsForStep, completedStepCount, starterExamples, hasDra
 import { shortAddress, type CreatorProfile } from '#shared/profile'
 
 const props = defineProps<{ profile: CreatorProfile | null }>()
-const emit = defineEmits<{ home: []; signOut: []; signedOut: [] }>()
+const emit = defineEmits<{ home: []; signOut: []; signedOut: []; wallet: [] }>()
 
 const productType = ref<'class' | 'pdf' | 'bundle'>('class')
 const productDocument = ref<{ key: string; name: string; size: number; receipt: string } | null>(null)
@@ -427,6 +427,7 @@ onBeforeUnmount(() => {
     <header class="topnav glass studio-nav">
       <button type="button" class="brand brand-button" aria-label="LearnPurse home" @click="requestLeave('home')"><BrandMark /><span>LearnPurse</span></button>
       <div class="nav-actions">
+        <button type="button" class="btn btn-glass btn-nav" aria-label="Wallet and earnings" @click="emit('wallet')"><StudioIcon name="wallet" :size="17" /><span>Wallet</span></button>
         <button type="button" class="btn btn-glass btn-nav preview-toggle" aria-label="Preview course" @click="previewOpen = true"><StudioIcon name="eye" :size="17" /><span>Preview</span></button>
         <button type="button" class="btn btn-dark btn-nav" aria-label="Save draft" :disabled="!mounted" @click="saveDraft"><StudioIcon :name="hasSavedDraft && !dirty ? 'check' : 'save'" :size="16" /><span>{{ hasSavedDraft && !dirty ? 'Saved' : 'Save draft' }}</span></button>
         <div class="account">
@@ -434,6 +435,7 @@ onBeforeUnmount(() => {
           <Transition name="pop">
             <div v-if="menuOpen" class="menu glass" role="menu">
               <div class="menu-head"><strong>{{ profile?.name || 'Guest creator' }}</strong><span>{{ profile?.walletAddress ? shortAddress(profile.walletAddress) : 'No wallet connected' }}</span></div>
+              <button type="button" role="menuitem" @click="menuOpen = false; emit('wallet')"><StudioIcon name="wallet" :size="16" />Wallet & earnings</button>
               <button type="button" role="menuitem" @click="menuOpen = false; examplesOpen = true"><StudioIcon name="sparkles" :size="16" />Start from an example</button>
               <button type="button" role="menuitem" @click="menuOpen = false; exportDraft()"><StudioIcon name="download" :size="16" />Export draft</button>
               <button v-if="profile" type="button" role="menuitem" @click="requestLeave('signOut')"><StudioIcon name="arrowLeft" :size="16" />Sign out</button>
