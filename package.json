@@ -38,6 +38,8 @@
     "@stellar/freighter-api": "6.0.1",
     "@x402/core": "2.32.0",
     "@x402/stellar": "2.32.0",
+    "dompurify": "^3.5.0",
+    "marked": "^18.3.0",
     "nuxt": "4.6.4",
     "postgres": "4.1.1",
     "primevue": "4.5.5",

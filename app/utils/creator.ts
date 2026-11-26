@@ -38,7 +38,8 @@ export async function connectFreighter(): Promise<WalletResult> {
     if (connected === 'timeout' || connected.error || !connected.isConnected) {
       return { ok: false, reason: 'not-installed', message: 'Freighter isn’t installed in this browser yet.' }
     }
-    const access = await api.requestAccess()
+    const access = await withTimeout(api.requestAccess(), 60_000)
+    if (access === 'timeout') return { ok: false, reason: 'error', message: 'Freighter did not respond. Click the Freighter icon in your toolbar, unlock it, then try again. You can also paste your address or skip for now.' }
     if (access.error || !access.address) {
       return { ok: false, reason: 'rejected', message: 'The connection was cancelled in Freighter.' }
     }

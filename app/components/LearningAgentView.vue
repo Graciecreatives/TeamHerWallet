@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import BrandMark from './BrandMark.vue'
 import StudioIcon from './StudioIcon.vue'
+import MarkdownText from './MarkdownText.vue'
 
 // Learning agent: an AI that buys classes for a learner over x402 on Stellar Testnet,
 // inside rules the owner sets. /agent (setup) or /agent/:id#key=... (console).
@@ -167,7 +168,7 @@ onMounted(async () => {
             <span class="la-icon"><StudioIcon :name="icon(event.kind)" :size="15" /></span>
             <div>
               <strong>{{ label(event.kind) }}<em v-if="event.data?.via"> · {{ event.data.via === 'ai' ? 'AI decided' : 'keyword fallback' }}</em></strong>
-              <p>{{ event.message }}</p>
+              <MarkdownText :text="event.message" />
               <a v-if="event.data?.transaction" :href="tx(event.data.transaction)" target="_blank" rel="noopener">View on Stellar Expert<StudioIcon name="external" :size="13" /></a>
               <a v-if="event.data?.contractId" :href="contractLink(event.data.contractId)" target="_blank" rel="noopener">Open the contract<StudioIcon name="external" :size="13" /></a>
               <div v-if="event.data?.resources?.length" class="la-resource-list">

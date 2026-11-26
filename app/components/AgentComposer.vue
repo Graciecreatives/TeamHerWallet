@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
 import StudioIcon from './StudioIcon.vue'
+import MarkdownText from './MarkdownText.vue'
 import type { AgentAction } from '#shared/agent'
 
 /**
@@ -80,7 +81,8 @@ defineExpose({ send })
 
     <div v-if="messages.length" ref="log" class="agent-log" aria-live="polite">
       <div v-for="(message, index) in messages" :key="index" class="agent-msg" :class="message.role">
-        <p>{{ message.text }}</p>
+        <p v-if="message.role === 'user'">{{ message.text }}</p>
+        <MarkdownText v-else :text="message.text" />
         <ul v-if="message.steps?.length" class="agent-steps">
           <li v-for="(step, stepIndex) in message.steps" :key="stepIndex"><StudioIcon name="check" :size="14" />{{ step }}</li>
         </ul>

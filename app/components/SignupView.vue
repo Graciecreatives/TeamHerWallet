@@ -83,7 +83,10 @@ function selectFocus(event: KeyboardEvent, index: number) {
 }
 function disconnect() { form.walletAddress = ''; walletNetwork.value = '' }
 async function finish() {
+  if (accountBusy.value) return
+  saveError.value = ''
   if (pasteMode.value && pasted.value.trim()) form.walletAddress = pasted.value.trim()
+  if (pasteMode.value && pasted.value.trim() && allErrors.value.walletAddress) { saveError.value = allErrors.value.walletAddress; return }
   const profile: CreatorProfile = { name: form.name.trim(), email: form.email.trim(), focus: form.focus, walletAddress: form.walletAddress, role: role.value }
   if (password.value.length < 12) { saveError.value = 'Use at least 12 characters for your password.'; go(0); return }
   accountBusy.value = true
@@ -171,6 +174,7 @@ function skipWallet() { pasteMode.value = false; pasted.value = ''; form.walletA
                 </div>
               </Transition>
               <p v-if="walletNetwork && walletNetwork !== 'TESTNET'" class="wallet-message">Switch Freighter to Testnet before publishing.</p>
+              <p v-if="saveError" class="wallet-message" role="alert"><StudioIcon name="alert" :size="15" />{{ saveError }}</p>
               <p class="fine"><StudioIcon name="shield" :size="14" />We only read your public address. LearnPurse never asks for your secret key.</p>
             </template>
 
@@ -187,7 +191,7 @@ function skipWallet() { pasteMode.value = false; pasted.value = ''; form.walletA
         <div class="auth-actions">
           <template v-if="step < 2"><button type="submit" class="btn btn-dark btn-block">Continue<StudioIcon name="arrowRight" :size="18" /></button></template>
           <template v-else-if="step === 2">
-            <button type="submit" class="btn btn-dark btn-block" :disabled="connecting || accountBusy || (!form.walletAddress && !(pasteMode && pasted.trim()))">Create profile</button>
+            <button type="submit" class="btn btn-dark btn-block" :disabled="connecting || accountBusy">{{ accountBusy ? 'Creating your account…' : 'Create profile' }}</button>
             <button type="button" class="btn btn-ghost btn-block" :disabled="connecting || accountBusy" @click="skipWallet">Skip for now</button>
           </template>
           <button v-else type="button" class="btn btn-dark btn-block" @click="emit('done', { name: form.name.trim(), email: form.email.trim(), focus: form.focus, walletAddress: form.walletAddress, role })">{{ role === 'student' ? 'Open your dashboard' : 'Open studio' }}<StudioIcon name="arrowRight" :size="18" /></button>

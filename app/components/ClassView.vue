@@ -4,6 +4,7 @@ import EnrolledClassroom from './EnrolledClassroom.vue'
 import { emptySchedule } from '#shared/classroom'
 import BrandMark from './BrandMark.vue'
 import StudioIcon from './StudioIcon.vue'
+import MarkdownText from './MarkdownText.vue'
 import { enrolWithX402, reopenClass, savedAccess, type Classroom, type PayStage } from '../utils/x402-pay'
 
 const props = defineProps<{ id: string }>()
@@ -173,7 +174,7 @@ async function copyAccessLink() {
           <section class="student-assistant" aria-labelledby="assistant-title">
             <div class="assistant-title"><span class="agent-icon"><StudioIcon name="sparkles" :size="17" /></span><div><h2 id="assistant-title">Ask about this class</h2><p>Answers come from the published course only.</p></div></div>
             <div class="assistant-messages" aria-live="polite">
-              <p v-for="(message, index) in chatMessages" :key="index" class="assistant-message" :class="message.role"><strong>{{ message.role === 'student' ? 'You' : 'LearnPurse AI' }}</strong>{{ message.text }}</p>
+              <div v-for="(message, index) in chatMessages" :key="index" class="assistant-message" :class="message.role"><strong>{{ message.role === 'student' ? 'You' : 'LearnPurse AI' }}</strong><span v-if="message.role === 'student'">{{ message.text }}</span><MarkdownText v-else :text="message.text" /></div>
             </div>
             <p v-if="chatBusy" class="assistant-message assistant"><strong>LearnPurse AI</strong>Thinking…</p>
             <div v-if="chatMessages.length < 3 && !paymentConfirmed" class="agent-prompts"><button v-for="text in suggestions" :key="text" type="button" class="btn btn-glass btn-sm" :disabled="chatBusy" @click="askSuggestion(text)">{{ text }}</button></div>
