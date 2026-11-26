@@ -24,14 +24,15 @@ test('saved learner profile preserves role through decoding', () => {
 test('student library returns only owned enrolments and private paid links', async () => {
   const source = stripTypeScriptTypes((await readFile(new URL('../server/api/courses/mine.get.ts', import.meta.url), 'utf8')).replace(/^import .*\n/gm, '')).replace('export default ', 'return ')
   const headers: Record<string, string> = {}
-  const handler = new Function('defineEventHandler', 'setResponseHeader', 'currentUser', 'createError', 'listCourses', 'publicCourse', source)(
+  const handler = new Function('defineEventHandler', 'setResponseHeader', 'currentUser', 'createError', 'listCourses', 'publicCourse', 'learnerOwnership', source)(
     (fn: any) => fn, (_event: any, name: string, value: string) => { headers[name] = value }, async () => ({ id: 'ada', role: 'student' }),
     (details: any) => Object.assign(new Error(details.statusMessage), details),
-    async () => [{ id: 'mine', enrolments: [{ userId: 'other', accessToken: 'others-token' }, { userId: 'ada', accessToken: 'my-token' }] }, { id: 'not-mine', enrolments: [{ userId: 'other', accessToken: 'private' }] }],
+    async () => [{ id: 'mine', enrolments: [{ userId: 'other', accessToken: 'others-token' }, { userId: 'ada', accessToken: 'my-token' }] }, { id: 'agent-bought', enrolments: [{ userId: null, student: 'ADA-AGENT-WALLET', accessToken: 'agent-token' }] }, { id: 'not-mine', enrolments: [{ userId: 'other', student: 'SOMEONE', accessToken: 'private' }] }],
     (course: any) => ({ id: course.id, title: 'Public title' }),
+    async (userId: string) => (entry: any) => entry.userId === userId || entry.student === 'ADA-AGENT-WALLET',
   )
   const result = await handler({})
-  assert.deepEqual(result.courses, [{ id: 'mine', title: 'Public title', url: '/class/mine?access=my-token' }])
+  assert.deepEqual(result.courses, [{ id: 'mine', title: 'Public title', url: '/class/mine?access=my-token' }, { id: 'agent-bought', title: 'Public title', url: '/class/agent-bought?access=agent-token' }])
   assert.equal(headers['Cache-Control'], 'private, no-store')
   assert.ok(!JSON.stringify(result).includes('others-token'))
 })

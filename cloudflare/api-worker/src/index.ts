@@ -287,8 +287,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (method === 'PATCH' && id && !parts[2]) {
       const row = await env.DB.prepare('SELECT * FROM learning_agents WHERE id = ?').bind(id).first<Row>()
       if (!row) return fail('Not found', 404)
-      await env.DB.prepare('UPDATE learning_agents SET name = ?, learner = ?, goal = ?, policy = ?, purse_id = COALESCE(?, purse_id) WHERE id = ?')
-        .bind(body.name ?? row.name, body.learner ?? row.learner, body.goal ?? row.goal, body.policy ? JSON.stringify(body.policy) : row.policy, body.purseId ?? null, id).run()
+      await env.DB.prepare('UPDATE learning_agents SET name = ?, learner = ?, goal = ?, policy = ?, purse_id = COALESCE(?, purse_id), user_id = COALESCE(user_id, ?) WHERE id = ?')
+        .bind(body.name ?? row.name, body.learner ?? row.learner, body.goal ?? row.goal, body.policy ? JSON.stringify(body.policy) : row.policy, body.purseId ?? null, body.userId ?? null, id).run()
       return json(agentOut((await env.DB.prepare('SELECT * FROM learning_agents WHERE id = ?').bind(id).first<Row>())!))
     }
     if (id && parts[2] === 'events') {

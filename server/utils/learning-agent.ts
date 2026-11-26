@@ -38,6 +38,8 @@ export interface StoredAgent {
   policy: AgentPolicy
   network: string
   createdAt: string
+  /** Learner account that owns this agent; its purchases show in that account's dashboard. */
+  userId?: string | null
 }
 
 export interface AgentEvent {
@@ -138,7 +140,7 @@ async function fundTestnetWallet(keypair: Keypair, usdcWanted: number): Promise<
   return { usdc: 0 }
 }
 
-export async function createAgent(input: { name?: unknown; learner?: unknown; goal?: unknown; policy?: unknown; walletSecret?: unknown; walletAddress?: unknown }) {
+export async function createAgent(input: { name?: unknown; learner?: unknown; goal?: unknown; policy?: unknown; walletSecret?: unknown; walletAddress?: unknown }, userId?: string | null) {
   const text = (value: unknown, max: number) => (typeof value === 'string' ? value.trim().slice(0, max) : '')
   const policy = cleanPolicy(input.policy)
   // Never import a personal wallet secret or pretend an address grants signing authority.
@@ -158,6 +160,7 @@ export async function createAgent(input: { name?: unknown; learner?: unknown; go
     purseId: null,
     policy,
     network: 'stellar:testnet',
+    userId: userId ?? null,
     createdAt: new Date().toISOString(),
   }
   const created = await cloud<{ agent?: StoredAgent }>('/agents', { method: 'POST', body: agent })

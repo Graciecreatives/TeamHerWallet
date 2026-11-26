@@ -6,6 +6,7 @@ import { classSchedule } from './classroom'
 import { cloud } from './cloud'
 import { studentProgress, notificationReads } from './student-store'
 import { learningAnalytics } from '#shared/student-learning'
+import { learnerOwnership } from './student-ownership'
 
 export async function requireStudent(event: H3Event) {
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
@@ -18,12 +19,12 @@ type Notification = { id: string; title: string; message: string; url: string; c
 const fingerprint = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 20)
 
 export async function studentLearning(userId: string) {
-  const [all, progress, reads] = await Promise.all([listCourses(), studentProgress(userId), notificationReads(userId)])
-  const owned = all.filter(course => course.enrolments.some(entry => entry.userId === userId))
+  const [all, progress, reads, owns] = await Promise.all([listCourses(), studentProgress(userId), notificationReads(userId), learnerOwnership(userId)])
+  const owned = all.filter(course => course.enrolments.some(owns))
   const notifications: Notification[] = []
   const warnings: string[] = []
   const courses = await Promise.all(owned.map(async course => {
-    const enrolments = course.enrolments.filter(entry => entry.userId === userId)
+    const enrolments = course.enrolments.filter(owns)
     const enrolment = enrolments[0]!
     const url = `/class/${course.id}?access=${encodeURIComponent(enrolment.accessToken)}`
     const add = (id: string, title: string, message: string, createdAt: string) => notifications.push({ id, title, message, url, createdAt, read: reads.includes(id) })
@@ -41,6 +42,6 @@ export async function studentLearning(userId: string) {
   }))
   notifications.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const visibleNotifications = [...new Map(notifications.map(entry => [entry.id, entry])).values()].slice(0, 200)
-  const amounts = owned.flatMap(course => course.enrolments.filter(entry => entry.userId === userId).map(() => Number(course.draft.priceAmount)))
+  const amounts = owned.flatMap(course => course.enrolments.filter(owns).map(() => Number(course.draft.priceAmount)))
   return { courses, analytics: learningAnalytics(courses, progress, amounts), notifications: visibleNotifications, unreadCount: visibleNotifications.filter(entry => !entry.read).length, warnings }
 }

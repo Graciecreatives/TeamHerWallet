@@ -47,9 +47,12 @@ async function api<T>(path: string, options: { method?: string; body?: unknown }
   if (!response.ok) throw new Error(body?.statusMessage || body?.message || `Request failed (${response.status})`)
   return body as T
 }
+let linkTried = false
 async function refresh() {
   try { state.value = await api<State>(`/api/learning-agents/${props.id}`); goalDraft.value ||= state.value.agent.goal; rulesDraft.value = { ...state.value.agent.policy } }
-  catch { missing.value = true }
+  catch { missing.value = true; return }
+  // Signed in as a learner? Link this agent to the account so its classes show in the dashboard.
+  if (!linkTried) { linkTried = true; void fetch(`/api/learning-agents/${props.id}/link`, { method: 'POST', credentials: 'include', headers: { 'x-agent-key': ownerKey.value } }).catch(() => {}) }
 }
 
 async function create() {
