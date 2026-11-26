@@ -57,11 +57,15 @@ const settlement = http.getPaymentSettleResponse(name => paid.headers.get(name))
 console.log('settled tx', settlement.transaction)
 assert.equal(body.enrolment.student, student.publicKey())
 assert.ok(body.modules.length >= 3 && body.modules[0].description)
-assert.equal(await usdcBalance(creator.publicKey()), '1.0000000')
+// With a platform fee the creator receives price minus fee (forwarded from the treasury); otherwise the full price.
+const feeInfo = (await (await fetch(`${BASE}/api/courses/${published.id}`)).json()).fee
+const expectedCreator = Number(feeInfo?.creator ?? 1).toFixed(7)
+assert.equal(await usdcBalance(creator.publicKey()), expectedCreator)
+console.log(`creator received ${expectedCreator} USDC, platform fee ${feeInfo?.platform ?? 0} USDC (${feeInfo?.percent ?? 0}%)`)
 
 const again = await fetch(accessUrl, { headers: { authorization: `Bearer ${body.accessToken}` } })
 assert.equal(again.status, 200)
 const listing = await (await fetch(`${BASE}/api/courses/${published.id}`)).json()
 assert.equal(listing.enrolled, 1)
 assert.equal(listing.seatsLeft, 29)
-console.log(`PASS: agent → listing → 402 → Stellar settlement ${settlement.transaction} → enrolled, creator received 1 USDC`)
+console.log(`PASS: agent → listing → 402 → Stellar settlement ${settlement.transaction} → enrolled, creator received ${expectedCreator} USDC`)

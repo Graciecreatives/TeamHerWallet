@@ -1,6 +1,37 @@
 import { classroom, findEnrolment, getCourse, newAccessToken, paymentPolicy, recordEnrolment, seatsLeft, withCourseLock } from '#server/utils/courses'
 import { currentUser } from '#server/utils/auth'
 import { courseRequirements, encodePaymentResponseHeader, paymentRequired, readPaymentSignature, resourceServer } from '#server/utils/x402'
+import { feeConfig, payoutCreator } from '#server/utils/platform-fee'
+
+const payouts = () => useStorage('payouts')
+
+/** Forward the creator's share. A failure never blocks the student: it is kept in the ledger for a retry. */
+async function settleCreatorShare(course: { id: string; payTo: string; draft: { priceAmount: string | number } }, studentTx: string) {
+  if (feeConfig().bps <= 0) return
+  const key = studentTx
+  try {
+    const result = await payoutCreator(course.payTo, course.draft.priceAmount, `LP ${course.id}`)
+    await payouts().setItem(key, { courseId: course.id, creator: course.payTo, studentTx, ...result, status: 'paid', at: new Date().toISOString() }).catch(() => {})
+  } catch (error) {
+    console.error(`[platform-fee] payout pending for ${course.id} (${studentTx}):`, error)
+    await payouts().setItem(key, { courseId: course.id, creator: course.payTo, studentTx, priceAmount: String(course.draft.priceAmount), status: 'pending', error: String((error as Error)?.message ?? error).slice(0, 300), at: new Date().toISOString() }).catch(() => {})
+  }
+}
+
+/** The student has already paid when this runs, so a brief database hiccup must not lose the enrolment. */
+async function recordWithRetry(id: string, enrolment: Parameters<typeof recordEnrolment>[1]) {
+  let lastError: any
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try { return await recordEnrolment(id, enrolment) } catch (error: any) {
+      lastError = error
+      if (error?.status === 409) break
+      await new Promise(done => setTimeout(done, 800 * (attempt + 1)))
+    }
+  }
+  console.error(`[enrolment] paid but not recorded: course ${id} tx ${enrolment.transaction}`, lastError)
+  await useStorage('payouts').setItem(`unrecorded-${enrolment.transaction}`, { courseId: id, ...enrolment, error: String(lastError?.message ?? lastError) }).catch(() => {})
+  throw createError({ statusCode: 503, statusMessage: `Your payment went through (transaction ${enrolment.transaction.slice(0, 12)}…) but we could not save your enrolment yet. Do not pay again. Refresh in a minute or contact support with this transaction.` })
+}
 
 // x402-protected course resource.
 // No payment: HTTP 402 + PAYMENT-REQUIRED (exact scheme, stellar:testnet, USDC, payTo = creator).
@@ -48,10 +79,13 @@ export default defineEventHandler(async (event) => {
 
     const settlement = await server.settlePayment(payload, accepted).catch(error => ({ success: false, errorReason: String(error?.message ?? error), transaction: '', network: accepted.network }))
     if (!settlement.success) return paymentRequired(event, fresh, requirements, settlement.errorReason ?? 'Payment settlement failed.')
+    // Money has moved. Pay the creator's share before anything else can fail.
+    const creatorShare = settleCreatorShare(fresh, settlement.transaction)
 
     const user = await currentUser(event)
     const enrolment = { student, transaction: settlement.transaction, network: settlement.network, enrolledAt: new Date().toISOString(), accessToken: existing?.accessToken ?? newAccessToken(), paymentNumber: payments.length + 1, userId: user?.role === 'student' ? user.id : null }
-    const updated = await recordEnrolment(fresh.id, enrolment)
+    const updated = await recordWithRetry(fresh.id, enrolment)
+    await creatorShare
     setResponseHeader(event, 'PAYMENT-RESPONSE', encodePaymentResponseHeader(settlement as Parameters<typeof encodePaymentResponseHeader>[0]))
     return classroom(updated!, enrolment)
   })

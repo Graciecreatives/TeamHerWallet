@@ -183,12 +183,12 @@ async function copyAccessLink() {
             <p class="payment-kicker">{{ paymentConfirmed ? 'Payment confirmed by you' : 'Before you pay' }}</p>
             <h2 id="payment-summary-title">{{ paymentConfirmed ? 'Ready for your wallet.' : 'Understand the payment.' }}</h2>
             <p class="enrol-note">{{ paymentConfirmed ? 'Freighter will show the exact transaction. LearnPurse cannot approve it for you.' : 'LearnPurse will show the exact request before Freighter opens.' }}</p>
-            <dl class="payment-summary"><div><dt>Course</dt><dd>{{ course.title }}</dd></div><div><dt>Amount</dt><dd>{{ course.priceAmount }} USDC</dd></div><div><dt>Network</dt><dd>Stellar Testnet</dd></div><div><dt>Creator wallet</dt><dd>{{ course.payTo }}</dd></div></dl>
+            <dl class="payment-summary"><div><dt>Course</dt><dd>{{ course.title }}</dd></div><div><dt>Amount</dt><dd>{{ course.priceAmount }} USDC</dd></div><div><dt>Network</dt><dd>Stellar Testnet</dd></div><div><dt>Creator wallet</dt><dd>{{ course.payTo }}</dd></div><template v-if="course.fee?.percent"><div><dt>Creator receives</dt><dd>{{ course.fee.creator }} USDC</dd></div><div><dt>LearnPurse fee ({{ course.fee.percent }}%)</dt><dd>{{ course.fee.platform }} USDC</dd></div><div><dt>You pay to</dt><dd>{{ course.paymentRecipient }}</dd></div></template></dl>
             <button v-if="!paymentConfirmed" type="button" class="btn btn-dark btn-block" :disabled="full" @click="confirmPayment">Continue to payment<StudioIcon name="arrowRight" :size="17" /></button>
           </section>
           <p class="enrol-price"><strong>{{ course.priceAmount }}</strong> USDC</p>
           <h2 id="enrol-title" class="sr-only">Enrol</h2>
-          <p class="enrol-note">One payment. Paid directly to {{ course.creatorName }}’s Stellar wallet.</p>
+          <p class="enrol-note">{{ course.fee?.percent ? `One payment. ${course.fee.creator} USDC goes to ${course.creatorName}, ${course.fee.platform} USDC is the LearnPurse fee.` : `One payment. Paid directly to ${course.creatorName}’s Stellar wallet.` }}</p>
           <button type="button" class="btn btn-dark btn-lg btn-block" :disabled="!paymentConfirmed || busy || full" @click="enrol">{{ full ? 'Class is full' : busy ? 'Waiting for wallet…' : 'Approve in Freighter' }}</button>
           <ol class="pay-steps agent-timeline" aria-label="Payment activity">
             <li v-for="(step, index) in steps" :key="step.id" :class="{ active: stageIndex === index && busy, done: stageIndex > index }">

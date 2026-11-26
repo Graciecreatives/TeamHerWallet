@@ -4,6 +4,7 @@ import type { PaymentPayload, PaymentRequirements } from '@x402/core/types'
 import { ExactStellarScheme } from '@x402/stellar/exact/server'
 import type { H3Event } from 'h3'
 import type { PublishedCourse } from './courses'
+import { paymentRecipient } from './platform-fee'
 
 export const STELLAR_NETWORK = 'stellar:testnet' as const
 /** Public x402 facilitator with stellar:testnet "exact" support and sponsored fees. */
@@ -37,7 +38,7 @@ export async function courseRequirements(course: PublishedCourse): Promise<Payme
   return (await resourceServer()).buildPaymentRequirements({
     scheme: 'exact',
     network: STELLAR_NETWORK,
-    payTo: course.payTo,
+    payTo: paymentRecipient(course.payTo),
     price: `$${course.draft.priceAmount}`,
     maxTimeoutSeconds: 300,
   })

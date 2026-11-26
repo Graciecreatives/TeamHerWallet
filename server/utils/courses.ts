@@ -3,6 +3,7 @@ import { cloud, cloudConfigured, cloudMaybe } from './cloud'
 import { validateCourseDraft, type CourseDraft } from '#shared/course'
 import type { ProductType, ProductDocument } from './documents'
 import { isStellarPublicKey } from '#shared/profile'
+import { feeSummary, paymentRecipient } from './platform-fee'
 
 export interface Enrolment {
   /** Stellar account that paid. */
@@ -97,6 +98,8 @@ export function publicCourse(course: PublishedCourse) {
     seatsLeft: seatsLeft(course),
     createdAt: course.createdAt,
     paymentPolicy: paymentPolicy(course),
+    fee: feeSummary(course.draft.priceAmount),
+    paymentRecipient: paymentRecipient(course.payTo),
   }
 }
 

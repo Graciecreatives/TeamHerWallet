@@ -239,8 +239,11 @@ async function payForCourse(agent: StoredAgent, origin: string, course: Publishe
   const first = await fetch(url)
   if (first.status !== 402) throw new Error(first.status === 409 ? 'The class is full.' : `Expected HTTP 402, got ${first.status}.`)
   const required = http.getPaymentRequiredResponse(name => first.headers.get(name), await first.json())
-  // Layer 2: sign only an offer that matches the listing exactly (price, Testnet, creator).
-  const offer = required.accepts.find((option: any) => option.network === 'stellar:testnet' && option.payTo === course.payTo)
+  // Layer 2: sign only an offer that matches the listing exactly (price, Testnet, and the published recipient:
+  // the creator, or the platform treasury that forwards the creator's share when a platform fee applies).
+  const listing: any = await fetch(`${origin}/api/courses/${course.id}`).then(response => response.ok ? response.json() : null).catch(() => null)
+  const recipients = new Set([course.payTo, listing?.paymentRecipient].filter(Boolean))
+  const offer = required.accepts.find((option: any) => option.network === 'stellar:testnet' && recipients.has(option.payTo))
   if (!offer) throw new Error('The payment offer does not match this class (network or creator).')
   const expected = BigInt(Math.round(Number(course.draft.priceAmount) * 1e7))
   if (BigInt(offer.amount) !== expected) throw new Error(`The payment offer (${Number(offer.amount) / 1e7} USDC) does not match the listed price.`)
