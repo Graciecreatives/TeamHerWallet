@@ -1,5 +1,5 @@
 import { isStellarPublicKey } from '#shared/profile'
-import { createSession, PASSWORD_MIN, registerUser, validatePassword } from '../../utils/auth'
+import { createSession, loginUser, PASSWORD_MIN, registerUser, validatePassword } from '../../utils/auth'
 
 export default defineEventHandler(async event => {
   const body = await readBody<{ email?: unknown; password?: unknown; displayName?: unknown; role?: unknown; focus?: unknown; walletAddress?: unknown }>(event).catch(() => null)
@@ -20,7 +20,12 @@ export default defineEventHandler(async event => {
     await createSession(event, user.id)
     return { user, passwordMinimum: PASSWORD_MIN }
   } catch (error) {
-    if ((error as { code?: string })?.code === '23505') throw createError({ statusCode: 409, statusMessage: 'An account with that email already exists.' })
+    if ((error as { code?: string })?.code === '23505') {
+      // A previous attempt may have created the account before a network blip. Same email + password: just sign in.
+      const existing = await loginUser(email, password as string).catch(() => null)
+      if (existing) { await createSession(event, existing.id); return { user: existing, passwordMinimum: PASSWORD_MIN } }
+      throw createError({ statusCode: 409, statusMessage: 'An account with that email already exists. Try logging in instead.' })
+    }
     throw error
   }
 })

@@ -12,17 +12,28 @@ export async function cloud<T = any>(path: string, options: { method?: 'GET' | '
   const config = useRuntimeConfig()
   if (!config.cloudApiUrl || !config.cloudApiSecret) throw new CloudError(503, 'The Cloudflare database is not configured. Set NUXT_CLOUD_API_URL and NUXT_CLOUD_API_SECRET.')
   const base = String(config.cloudApiUrl).replace(/\/+$/, '')
-  try {
-    return await ($fetch as (url: string, options: any) => Promise<T>)(`${base}${path}`, {
-      method: options.method ?? 'GET',
-      headers: { authorization: `Bearer ${config.cloudApiSecret}` },
-      body: options.body as any,
-      query: options.query,
-      timeout: 15_000,
-      retry: options.method && options.method !== 'GET' ? 0 : 2,
-    })
-  } catch (error: any) {
-    throw new CloudError(error?.statusCode ?? error?.response?.status ?? 502, error?.data?.error ?? 'Database unavailable')
+  // Cloudflare occasionally returns transient 5xx/network errors. Retry those with backoff.
+  // Writes are retried too: callers treat a 409 on retry as "already done" where it matters.
+  const attempts = 4
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await ($fetch as (url: string, options: any) => Promise<T>)(`${base}${path}`, {
+        method: options.method ?? 'GET',
+        headers: { authorization: `Bearer ${config.cloudApiSecret}` },
+        body: options.body as any,
+        query: options.query,
+        timeout: 15_000,
+        retry: 0,
+      })
+    } catch (error: any) {
+      const status = error?.statusCode ?? error?.response?.status ?? 502
+      const transient = status >= 500 || status === 429 || status === 408
+      // Writes only retry on gateway errors (request never reached the database) to avoid duplicates.
+      const isWrite = (options.method ?? 'GET') !== 'GET'
+      const retryable = isWrite ? (!error?.response || [429, 502, 503, 504].includes(status)) : transient
+      if (retryable && attempt < attempts) { await new Promise(resolve => setTimeout(resolve, 250 * 2 ** (attempt - 1))); continue }
+      throw new CloudError(status, error?.data?.error ?? (transient ? 'The database is busy right now. Please try again in a moment.' : 'Database unavailable'))
+    }
   }
 }
 
