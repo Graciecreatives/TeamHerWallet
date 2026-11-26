@@ -23,7 +23,8 @@ export default defineEventHandler(async event => {
     if ((error as { code?: string })?.code === '23505') {
       // A previous attempt may have created the account before a network blip. Same email + password: just sign in.
       const existing = await loginUser(email, password as string).catch(() => null)
-      if (existing) { await createSession(event, existing.id); return { user: existing, passwordMinimum: PASSWORD_MIN } }
+      if (existing && existing.role === role) { await createSession(event, existing.id); return { user: existing, passwordMinimum: PASSWORD_MIN } }
+      if (existing) throw createError({ statusCode: 409, statusMessage: `This email already has a ${existing.role} account. Log in with it, or sign up as a ${role} with a different email.` })
       throw createError({ statusCode: 409, statusMessage: 'An account with that email already exists. Try logging in instead.' })
     }
     throw error
