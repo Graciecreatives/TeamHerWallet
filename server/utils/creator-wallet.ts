@@ -63,9 +63,9 @@ export interface Sale {
 }
 
 /** All sales of these classes with the creator's share and whether that share has arrived on-chain. */
-export async function creatorSales(courses: PublishedCourse[]): Promise<{ sales: Sale[]; payouts: Map<string, ChainPayment[]> }> {
+export async function creatorSales(courses: PublishedCourse[], extraWallet?: string | null): Promise<{ sales: Sale[]; payouts: Map<string, ChainPayment[]> }> {
   const { treasury, bps } = feeConfig()
-  const wallets = [...new Set(courses.map(course => course.payTo))]
+  const wallets = [...new Set([...courses.map(course => course.payTo), ...(extraWallet ? [extraWallet] : [])])]
   const payouts = new Map<string, ChainPayment[]>()
   await Promise.all(wallets.map(async wallet => payouts.set(wallet, await walletPayments(wallet).catch(() => []))))
   const sales: Sale[] = []

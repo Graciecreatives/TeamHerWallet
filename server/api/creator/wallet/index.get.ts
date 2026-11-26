@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const address = user.walletAddress
   const [balance, { sales, payouts }] = await Promise.all([
     address ? walletBalance(address).catch(() => null) : Promise.resolve(null),
-    creatorSales(courses),
+    creatorSales(courses, address),
   ])
   const sum = (list: typeof sales, key: 'net' | 'fee' | 'gross') => fromUnits(list.reduce((total, sale) => total + toUnits(sale[key]), 0n))
   const received = sales.filter(sale => sale.status !== 'pending')
