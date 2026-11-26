@@ -79,7 +79,12 @@ export async function enrolWithX402(id: string, onStage: (stage: PayStage) => vo
         return { signedAuthEntry: signed.signedAuthEntry, signerAddress: signed.signerAddress }
       },
     }
-    const client = new x402HTTPClient(new x402Client().register('stellar:*', new ExactStellarScheme(signer)))
+    // The x402 client caps every payment at $1 by default, which silently blocks any class above $1 before
+    // Freighter opens. Cap at exactly this class's advertised amount instead; Freighter still shows it for approval.
+    const offerAmount = required.accepts.reduce((max: bigint, option: any) => { try { const value = BigInt(option.amount); return value > max ? value : max } catch { return max } }, 0n)
+    const base = new x402Client()
+    if (offerAmount > 0n) base.setSpendControls({ maxAmountPerPayment: `$${Number(offerAmount) / 1e7}` })
+    const client = new x402HTTPClient(base.register('stellar:*', new ExactStellarScheme(signer)))
     const payload = await client.createPaymentPayload(required)
 
     onStage('settling')
@@ -91,6 +96,7 @@ export async function enrolWithX402(id: string, onStage: (stage: PayStage) => vo
     return body
   } catch (error) {
     onStage('error')
+    console.error('[x402-pay]', error)
     throw new Error(friendlyError(error instanceof Error ? error.message : String(error)))
   }
 }
